@@ -30,13 +30,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 
+// if anchor tag "check" is clicked, run this
 if (isset($_GET['task_id'])) {
-    $taskId = $_GET['task_id'];
 
+    // get ID of the task
+    $taskId = $_GET['task_id'];
+    // sql query that will return 1 if task is complete else 0 
     $taskStatus = "SELECT completed FROM tasks WHERE id = $taskId";
+    // sql query that will update a task as completed by changing 0 to 1
     $checkComplete = "UPDATE tasks SET completed = 1 WHERE id = $taskId";
 
+    // apply sql query $checkComplete
     if ($conn->query($checkComplete) === TRUE) {
+        // if query is successful, run this
         $message = "Task marked as completed!";
     } else {
         $message = "Error updating record: " . $conn->error;
@@ -68,22 +74,36 @@ if (isset($_GET['task_id'])) {
     <p><?php $message ?></p>
 
     <?php
+    // sql query to get all rows from table TASKS
     $sql = "SELECT * FROM tasks";
+    // run query above and save the result
     $result = $conn->query($sql);
 
+    // run code block IF there are rows or tasks inside table TASKS
     if ($result->num_rows > 0) {
+        // all rows as a list of tasks
         echo "<ul>";
+        // looping over each row
         while ($row = $result->fetch_assoc()) {
+            // each row inside a list
             echo "<li>";
+            // if a row is not completed yet, run code block below
             if (!$row["completed"]) {
                 echo '<a href="?task_id=' . $row["id"] . '">Check</a> - ';
             }
+            // name of the task
             echo $row["task"];
+            // closing a list
             echo "</li>";
         }
+        // closing the list of tasks
         echo "</ul>";
+    } else {
+        // if there are no data inside the table tasks
+        echo "<h3>Please add a task.</h3>";
     }
 
+    // close connection to the database
     $conn->close();
     ?>
 </body>
