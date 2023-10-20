@@ -1,62 +1,62 @@
 <?php
+// to show the errors that might happen, including where in this program, 
+// meaning - which lines in this program we have the error 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-  $db_host = 'localhost';
-  $db_user = 'root';
-  $db_password = 'root';
-  $db_name = 'todo_app';
- 
-  $conn = @new mysqli(
-    $db_host,
-    $db_user,
-    $db_password,
-    $db_name,
-  );
-	
-  if ($conn->connect_error) {
-    echo 'Errno: '.$conn->connect_errno;
-    echo '<br>';
-    echo 'Error: '.$conn->connect_error;
-    exit();
-  }
-
-  echo 'Success: A proper connection to MySQL was made.';
-  echo '<br>';
-  echo 'Host information: '.$conn->host_info;
-  echo '<br>';
-  echo 'Protocol version: '.$conn->protocol_version;
-
-
-    if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $task = $_POST["task"];
-        $sql = "INSERT INTO tasks (task) VALUES ('$task')";
-        if ($conn->query($sql) === TRUE) {
-            echo "\n\nNew task added successfully!";
-        } else {
-            echo "\n\nError: " . $sql . "<br>" . $conn->error;
-        }
-    }
-
-    if (isset($_GET['task_id'])) {
-        $taskId = $_GET['task_id'];
-        $sql = "UPDATE tasks SET completed = 1 WHERE id = $taskId";
-        if ($conn->query($sql) === TRUE) {
-            echo "Task marked as completed!";
-        } else {
-            echo "Error updating record: " . $conn->error;
-        }
-    }
+// connecting with another php file - database.php
+include("database.php");
 ?>
 
+<!-- start of the HTML -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo List</title>
 </head>
+
 <body>
+    <!-- PHP code inside the body -->
+    <?php
+    // run if user interacted with the form and hit the submit button
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        // extract the data from the input text named "task"
+        // saved to variable -> $task
+        $task = $_POST["task"];
+
+        // sql syntax to insert $task to the table named "tasks"
+        // saved to variable -> $sql
+        $sql = "INSERT INTO tasks (task) VALUES ('$task')";
+
+        // get database connection and insert our add-task query
+        if ($conn->query($sql) === TRUE) {
+            // if that is true, then show code below
+            echo "\n\nNew task added successfully!";
+        } else {
+            // else, run this code and show error
+            echo "\n\nError: " . $sql . "<br>" . $conn->error;
+        }
+    }
+
+
+    if (isset($_GET['task_id'])) {
+        $taskId = $_GET['task_id'];
+
+        $taskStatus = "SELECT completed FROM tasks WHERE id = $taskId";
+        $checkComplete = "UPDATE tasks SET completed = 1 WHERE id = $taskId";
+
+        if ($conn->query($checkComplete) === TRUE) {
+            echo "Task marked as completed!";
+        } else {
+            echo "Error updating record: " . $conn->error;
+        }
+    }
+
+    ?>
+
     <h2>Todo List</h2>
     <form method="post" action="<?php echo $_SERVER["PHP_SELF"]; ?>">
         <label for="task">Task:</label>
@@ -64,29 +64,32 @@ ini_set('display_errors', 1);
         <button type="submit">Add Task</button>
     </form>
 
-    <h3>Tasks:</h3>
-    <ul>
-        <?php
-            $sql = "SELECT * FROM tasks";
-            $result = $conn->query($sql);
-
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<li>";
-                    if (!$row["completed"]) {
-                        echo '<a href="?task_id=' . $row["id"] . '">Mark as Completed</a> - ';
-                    }
-                    echo $row["task"];
-                    echo "</li>";
-                }
-            } else {
-                echo "No tasks yet.";
-            }
-        ?>
-    </ul>
 
     <?php
-        $conn->close();
+    $sql = "SELECT * FROM tasks";
+    $result = $conn->query($sql);
+    ?>
+
+    <h5>Todos</h5>
+    <?php
+    if ($result->num_rows > 0) {
+        echo "<ul>";
+        while ($row = $result->fetch_assoc()) {
+            echo "<li>";
+            if (!$row["completed"]) {
+                echo '<a href="?task_id=' . $row["id"] . '">Check</a> - ';
+            }
+            echo $row["task"];
+            echo "</li>";
+        }
+        echo "</ul>";
+    }
+    ?>
+
+    <?php
+    $conn->close();
     ?>
 </body>
+
 </html>
+<!-- end of HTML -->
